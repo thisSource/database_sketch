@@ -368,6 +368,7 @@ export default function Home() {
           <a
             className="text-blue-700"
             target="_blank"
+            rel="noreferrer"
             href="https://www.investor.gov/introduction-investing/investing-basics/investment-products/mutual-funds-and-exchange-traded-1#:~:text=A%20mutual%20fund%20is%20a,buy%20shares%20in%20mutual%20funds."
           >
             What is a mutual fund?
@@ -377,6 +378,7 @@ export default function Home() {
           <a
             className="text-blue-700"
             target="_blank"
+            rel="noreferrer"
             href="https://www.investopedia.com/terms/o/open-endfund.asp"
           >
             What is an open-ended fund?
@@ -386,6 +388,7 @@ export default function Home() {
           <a
             className="text-blue-700"
             target="_blank"
+            rel="noreferrer"
             href="https://www.investor.gov/introduction-investing/investing-basics/glossary/net-asset-value#:~:text=%22Net%20asset%20value%2C%22%20or,NAV%20will%20be%20%2490%20million."
           >
             What is Net asset value (NAV)?
