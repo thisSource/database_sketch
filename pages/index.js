@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "../components/client";
 
@@ -13,8 +12,12 @@ export default function Home() {
 
   let [subscription, setsubscription] = useState(100);
 
+  let [redemtion, setRedemtion] = useState(95);
+
   let [user, setUser] = useState([
-    { user_id: 1, first_name: "Loading", balance: 0, shares: 0 }
+    { user_id: 1, first_name: "Loading", balance: 0, shares: 0 },
+    { user_id: 2, first_name: "Loading", balance: 0, shares: 0 },
+    { user_id: 3, first_name: "Loading", balance: 0, shares: 0 }
   ]);
 
   let [assets, setAssets] = useState([
@@ -48,6 +51,7 @@ export default function Home() {
   async function resetAll() {
     let asset_cash_value = 0;
     let asset_portfolio_value = 10000;
+    let asset_cash_liability = 0;
 
     let nav_value_set = 10000;
     let total_share_set = 10000;
@@ -61,6 +65,10 @@ export default function Home() {
     let philip_shares = 3333;
     let jens_shares = 3334;
 
+    let alex_claim = 0;
+    let philip_claim = 0;
+    let jens_claim = 0;
+
     await supabase
       .from("assets")
       .update({ asset_value: asset_cash_value })
@@ -69,6 +77,11 @@ export default function Home() {
       .from("assets")
       .update({ asset_value: asset_portfolio_value })
       .match({ asset_id: 2 });
+
+    await supabase
+      .from("assets")
+      .update({ asset_value: asset_cash_liability })
+      .match({ asset_id: 3 });
 
     await supabase
       .from("users")
@@ -94,6 +107,19 @@ export default function Home() {
     await supabase
       .from("users")
       .update({ shares: jens_shares })
+      .match({ user_id: 3 });
+
+    await supabase
+      .from("users")
+      .update({ cash_claim: alex_claim })
+      .match({ user_id: 1 });
+    await supabase
+      .from("users")
+      .update({ cash_claim: philip_claim })
+      .match({ user_id: 2 });
+    await supabase
+      .from("users")
+      .update({ cash_claim: jens_claim })
       .match({ user_id: 3 });
 
     await supabase
@@ -133,21 +159,69 @@ export default function Home() {
       .match({ nav_id: 1 });
   }
 
-  async function updateUserShares(e) {
-    let inc = e + user[0].shares;
-    await supabase.from("users").update({ shares: inc }).match({ user_id: 1 });
-    await supabase.from("users").update({ shares: inc }).match({ user_id: 2 });
-    await supabase.from("users").update({ shares: inc }).match({ user_id: 3 });
+  async function updateUserCashClaim(e) {
+    let inc = e;
+    await supabase
+      .from("users")
+      .update({ cash_claim: inc })
+      .match({ user_id: 1 });
+    await supabase
+      .from("users")
+      .update({ cash_claim: inc })
+      .match({ user_id: 2 });
+    await supabase
+      .from("users")
+      .update({ cash_claim: inc })
+      .match({ user_id: 3 });
   }
 
-  async function updateAllUser(e) {
-    user.map(async (item) => {
-      let newBalance = item.shares * e;
-      await supabase
-        .from("users")
-        .update({ balance: newBalance })
-        .match({ user_id: item.user_id });
-    });
+  async function updateUserBalance(e) {
+    let userBalanceA = user[0].balance + nav[0].nav_per_share * e;
+    let userBalanceB = user[1].balance + nav[0].nav_per_share * e;
+    let userBalanceC = user[2].balance + nav[0].nav_per_share * e;
+
+    await supabase
+      .from("users")
+      .update({ balance: userBalanceA })
+      .match({ user_id: 1 });
+    await supabase
+      .from("users")
+      .update({ balance: userBalanceB })
+      .match({ user_id: 2 });
+    await supabase
+      .from("users")
+      .update({ balance: userBalanceC })
+      .match({ user_id: 3 });
+  }
+
+  async function updateUserValueBalance() {
+    let userBalanceA = user[0].shares * nav[0].nav_per_share;
+    let userBalanceB = user[1].shares * nav[0].nav_per_share;
+    let userBalanceC = user[2].shares * nav[0].nav_per_share;
+
+    await supabase
+      .from("users")
+      .update({ balance: userBalanceA })
+      .match({ user_id: 1 });
+    await supabase
+      .from("users")
+      .update({ balance: userBalanceB })
+      .match({ user_id: 2 });
+    await supabase
+      .from("users")
+      .update({ balance: userBalanceC })
+      .match({ user_id: 3 });
+  }
+
+  async function updateUserShares(e) {
+    //fix
+    let incA = e + user[0].shares;
+    let incB = e + user[1].shares;
+    let incC = e + user[2].shares;
+
+    await supabase.from("users").update({ shares: incA }).match({ user_id: 1 });
+    await supabase.from("users").update({ shares: incB }).match({ user_id: 2 });
+    await supabase.from("users").update({ shares: incC }).match({ user_id: 3 });
   }
 
   async function updateCash(e) {
@@ -156,6 +230,14 @@ export default function Home() {
       .from("assets")
       .update({ asset_value: inc })
       .match({ asset_id: 1 });
+  }
+
+  async function updateCashLiability(e) {
+    let inc = parseInt(e) + assets[2].asset_value;
+    await supabase
+      .from("assets")
+      .update({ asset_value: inc })
+      .match({ asset_id: 3 });
   }
 
   async function cashToPortfolio(e) {
@@ -181,11 +263,11 @@ export default function Home() {
   }
 
   useEffect(() => {
-    getUsers();
     getAssets();
     getNav();
-    updateAllUser(nav[0].nav_per_share);
-  }, [assets]);
+    getUsers();
+    updateUserValueBalance();
+  }, [user]);
 
   return (
     <div className="grid grid-cols-2 gap-8 my-8 mx-10 lg:text-base text-xs">
@@ -195,17 +277,19 @@ export default function Home() {
           <p className="my-4">DATABASE</p>
 
           <p className="my-2">USER TABLE</p>
-          <div className="border-b-2 grid grid-cols-3 gap-1">
+          <div className="border-b-2 grid grid-cols-4 gap-1">
             <span className="mr-5">User</span>
             <span>Balance</span>
             <span>Shares</span>
+            <span>Cash claim</span>
           </div>
           {user.map((item) => (
             <Users
               key={item.user_id}
               user_name={item.user_name}
-              balance={Number(item.balance).toFixed(2)}
-              shares={Number(item.shares).toFixed(2)}
+              balance={Number(item.balance).toFixed(3)}
+              shares={Number(item.shares).toFixed(3)}
+              cash_claim={Number(item.cash_claim)}
             />
           ))}
         </div>
@@ -273,13 +357,20 @@ export default function Home() {
             subscribed / nav per share). The database updates cash asset, total
             NAV, user shares and user balance{" "}
           </p>
+          <p className="my-4">
+            IN PROTOTYPE: input is the aggregated transactions from tink per
+            user, when the user click transfer to fund. This will trigger the
+            payment. and when the payment is done and matches the tink amount,
+            update cash asset
+          </p>
           <button
             className="bg-gray-200 p-2 rounded-md my-2 hover:bg-green-400"
             onClick={() => {
-              updateUserShares(subscription);
+              updateUserShares(subscription / nav[0].nav_per_share);
               updateCash(subscription * user.length);
               updateTotalNav(subscription * user.length);
               updateTotalShare(subscription * user.length);
+              updateUserBalance(subscription);
             }}
           >
             Users subscribe cash
@@ -289,6 +380,11 @@ export default function Home() {
         {/* CASH TO PORTFOLIO */}
         <p className=""> STEP 2 - INVEST CASH IN FUND PORTFOLIO </p>
         <p> The fund invest user cash into equity (stocks, bonds, etc) </p>
+        <p className="my-4">
+          IN PROTOTYPE: The cash is transfered on Nordnet to the portfolio by
+          buying stocks. The database is updated with fetching fund data from
+          Nordnet API
+        </p>
         <div className="content">
           <button
             className="bg-gray-200 p-2 rounded-md my-2 hover:bg-green-400"
@@ -307,6 +403,12 @@ export default function Home() {
           The fund value fluctuates as equity increases or decreases in value.
           The value of the fund or NAV is calculated once a day{" "}
         </p>
+
+        <p className="my-4">
+          IN PROTOTYPE: Fund value is updated by fetching fund data from Nordnet
+          API
+        </p>
+
         <div className="content">
           <button
             className="bg-gray-200 p-2 rounded-md my-2 hover:bg-green-400"
@@ -326,6 +428,12 @@ export default function Home() {
           Calculate the NAV per share. NAV per shares moves with the value of
           the fund. (FORMULA: NAV / Total shares)
         </p>
+
+        <p className="my-4">
+          IN PROTOTYPE: The NAV PER SHARE is calculated on a set frequency
+          (minimum once per day), along with user data, nav data, and asset data{" "}
+        </p>
+
         <div className="content">
           <button
             className="bg-gray-200 p-2 rounded-md my-2 hover:bg-green-400"
@@ -338,28 +446,77 @@ export default function Home() {
         </div>
 
         <div className="my-2">
-          <p className="">
-            {" "}
-            STEP 1 - User invest (subscribe) cash to the fund.
-          </p>
           <p>
             {" "}
             The process restarts, shares are issues based on cash investment
             divided by NAV per share
           </p>
+
+          <p className="mt-8 mb-4"> REDEMTION PROCESS</p>
+
+          <p> STEP 1: User request to withdraw cash and sell fund shares</p>
+
+          <p className="my-4">
+            IN PROTOTYPE: A notification is sent to fund manager that a user
+            want to withdraw. The fund manager starts the process{" "}
+          </p>
+
           <button
             className="bg-gray-200 p-2 rounded-md my-2 hover:bg-green-400"
             onClick={() => {
-              console.log(subscription / nav[0].nav_per_share);
-              updateUserShares(subscription / nav[0].nav_per_share);
-              updateCash(subscription * user.length);
-              updateTotalNav(subscription * user.length);
+              updateUserCashClaim(redemtion);
+              updateCashLiability(redemtion * user.length);
+            }}
+          >
+            Request whithdrawal
+          </button>
+
+          <p> STEP 2: Portfolio to cash, the fund sells equity to pay user</p>
+
+          <p className="my-4">
+            IN PROTOTYPE: The fund manager sells shares at Nordnet. Cash and
+            portfolio assets are updated in database using Nordnet API
+          </p>
+
+          <button
+            className="bg-gray-200 p-2 rounded-md my-2 hover:bg-green-400"
+            onClick={() => {
+              updatePortfolio(-assets[2].asset_value);
+              updateCash(assets[2].asset_value);
+            }}
+          >
+            Portfolio to cash
+          </button>
+
+          <p>
+            {" "}
+            STEP 3: The fund pays the user, updates total NAV, total shares,
+            user shares, user balance, cash liability, portfolio asset and cash
+            asset
+          </p>
+
+          <p className="my-4">
+            IN PROTOTYPE: The payment is done to user account via tink payment
+            or other payment service. When payment is complete the redemtion is
+            processed{" "}
+          </p>
+
+          <button
+            className="bg-gray-200 p-2 rounded-md my-2 hover:bg-green-400"
+            onClick={() => {
+              updateUserCashClaim(
+                assets[2].asset_value - user[0].cash_claim * user.length
+              ); //fix code
+              updateCash(-user[0].cash_claim * user.length); //fix code
+              updateCashLiability(-user[0].cash_claim * user.length); //fix code
+              updateUserShares(-(redemtion / nav[0].nav_per_share));
+              updateTotalNav(-user[0].cash_claim * user.length);
               updateTotalShare(
-                (subscription / nav[0].nav_per_share) * user.length
+                -(redemtion / nav[0].nav_per_share) * user.length
               );
             }}
           >
-            Users subscribe cash AGAIN
+            Process redemtion
           </button>
         </div>
       </div>
@@ -396,5 +553,5 @@ export default function Home() {
         </div>
       </div>
     </div>
-  );
+  );  
 }
