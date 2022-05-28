@@ -287,8 +287,8 @@ export default function Home() {
             <Users
               key={item.user_id}
               user_name={item.user_name}
-              balance={Number(item.balance).toFixed(3)}
-              shares={Number(item.shares).toFixed(3)}
+              balance={Number(item.balance).toFixed(2)}
+              shares={Number(item.shares).toFixed(2)}
               cash_claim={Number(item.cash_claim)}
             />
           ))}
