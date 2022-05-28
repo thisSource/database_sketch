@@ -4,6 +4,8 @@ module.exports = {
     "./components/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
+    fontSize: {
+      'xxs': '.65rem'},
     extend: {},
   },
   plugins: [],

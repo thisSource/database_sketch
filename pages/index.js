@@ -270,7 +270,7 @@ export default function Home() {
   }, [user]);
 
   return (
-    <div className="grid grid-cols-2 gap-8 my-8 mx-10 lg:text-base text-xs">
+    <div className="grid grid-cols-2 gap-8 my-8 mx-10 lg:text-base text-xxs">
       <div className="">
         {/* USER SIDE */}
         <div className="content">
