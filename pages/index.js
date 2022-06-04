@@ -4,10 +4,15 @@ import { supabase } from "../components/client";
 import Portfolio from "../components/Portfolio";
 import Nav from "../components/Nav";
 import Users from "../components/Users";
+import CO2 from "../components/CO2";
 
 export default function Home() {
   let [nav, setNav] = useState([
     { nav_id: 1, nav_name: "Loading", nav_value: 0 }
+  ]);
+
+  let [co2, setCo2] = useState([
+    { co2_id: 1, co2_value: 0, co2_per_share: 0 },
   ]);
 
   let [subscription, setsubscription] = useState(100);
@@ -15,13 +20,14 @@ export default function Home() {
   let [redemtion, setRedemtion] = useState(95);
 
   let [user, setUser] = useState([
-    { user_id: 1, first_name: "Loading", balance: 0, shares: 0 },
-    { user_id: 2, first_name: "Loading", balance: 0, shares: 0 },
-    { user_id: 3, first_name: "Loading", balance: 0, shares: 0 }
+    { user_id: 1, first_name: "Loading", balance: 0, co2_balance: 0, shares: 0 },
+    { user_id: 2, first_name: "Loading", balance: 0, co2_balance: 0, shares: 0 },
+    { user_id: 3, first_name: "Loading", balance: 0, co2_balance: 0, shares: 0 }
   ]);
 
   let [assets, setAssets] = useState([
-    { asset_id: 1, asset_name: "Loading", asset_value: 0 }
+    { asset_id: 1, asset_name: "Loading", asset_value: 0 },
+    { asset_id: 2, asset_name: "Loading", asset_value: 0 }
   ]);
 
   // GET DATA
@@ -47,6 +53,11 @@ export default function Home() {
     setAssets(data);
   }
 
+  async function getCO2() {
+    const { data } = await supabase.from("co2").select("*"); // Select all the tasks from the Task Table
+    setCo2(data);
+  }
+
   // RESET DATA
   async function resetAll() {
     let asset_cash_value = 0;
@@ -64,6 +75,10 @@ export default function Home() {
     let alex_shares = 3333;
     let philip_shares = 3333;
     let jens_shares = 3334;
+
+    let alex_co2 = 33.33;
+    let philip_co2 = 33.33;
+    let jens_co2 = 33.34;
 
     let alex_claim = 0;
     let philip_claim = 0;
@@ -109,6 +124,19 @@ export default function Home() {
       .update({ shares: jens_shares })
       .match({ user_id: 3 });
 
+      await supabase
+      .from("users")
+      .update({ co2_balance: alex_co2 })
+      .match({ user_id: 1 });
+    await supabase
+      .from("users")
+      .update({ co2_balance: philip_co2 })
+      .match({ user_id: 2 });
+    await supabase
+      .from("users")
+      .update({ co2_balance: jens_co2 })
+      .match({ user_id: 3 });
+
     await supabase
       .from("users")
       .update({ cash_claim: alex_claim })
@@ -137,11 +165,12 @@ export default function Home() {
   }
 
   // UPDATE DATA
-  async function updateTotalNav(e) {
-    let inc = e + nav[0].nav_value;
+
+
+  async function updateTotalNav() {
+    let inc = assets[1].asset_value + assets[0].asset_value
     await supabase.from("nav").update({ nav_value: inc }).match({ nav_id: 1 });
   }
-
   async function updateTotalShare(e) {
     let inc = e + nav[0].nav_value;
     let nps = inc / (e + nav[0].total_shares);
@@ -224,6 +253,25 @@ export default function Home() {
     await supabase.from("users").update({ shares: incC }).match({ user_id: 3 });
   }
 
+  async function updateUserCO2Balance() {
+    let userBalanceA = user[0].shares * co2[0].co2_per_share;
+    let userBalanceB = user[1].shares * co2[0].co2_per_share;
+    let userBalanceC = user[2].shares * co2[0].co2_per_share;
+
+    await supabase
+      .from("users")
+      .update({ co2_balance: userBalanceA })
+      .match({ user_id: 1 });
+    await supabase
+      .from("users")
+      .update({ co2_balance: userBalanceB })
+      .match({ user_id: 2 });
+    await supabase
+      .from("users")
+      .update({ co2_balance: userBalanceC })
+      .match({ user_id: 3 });
+  }
+
   async function updateCash(e) {
     let inc = parseInt(e) + assets[0].asset_value;
     await supabase
@@ -262,11 +310,21 @@ export default function Home() {
       .match({ asset_id: 2 });
   }
 
+  async function updateCO2value() {
+    console.log(nav[0].nav_value * co2[0].co2_per_share)
+    let inc = nav[0].nav_value * co2[0].co2_per_share
+    await supabase.from("co2").update({ co2_value: inc }).match({ co2_id: 1 });
+  }
+
   useEffect(() => {
     getAssets();
     getNav();
     getUsers();
+    getCO2();
     updateUserValueBalance();
+    updateUserCO2Balance();
+    updateTotalNav();
+    updateCO2value() 
   }, [user]);
 
   return (
@@ -277,10 +335,11 @@ export default function Home() {
           <p className="my-4">DATABASE</p>
 
           <p className="my-2">USER TABLE</p>
-          <div className="border-b-2 grid grid-cols-4 gap-1">
+          <div className="border-b-2 grid grid-cols-5 gap-1">
             <span className="mr-5">User</span>
             <span>Balance</span>
             <span>Shares</span>
+            <span>CO2 balance</span>
             <span>Cash claim</span>
           </div>
           {user.map((item) => (
@@ -289,6 +348,7 @@ export default function Home() {
               user_name={item.user_name}
               balance={Number(item.balance).toFixed(2)}
               shares={Number(item.shares).toFixed(2)}
+              co2_balance={Number(item.co2_balance).toFixed(2)}
               cash_claim={Number(item.cash_claim)}
             />
           ))}
@@ -329,7 +389,25 @@ export default function Home() {
             />
           ))}
         </div>
+
+        {/* CO2 */}
+        <div className="mt-8">
+          {" "}
+          <p className="my-2">CO2 ASSETS</p>
+          <div className="border-b-2 grid grid-cols-3 gap-1">
+            <span className="mr-5">CO2 Value</span>
+            <span className="mr-5">CO2 per share</span>
+          </div>
+          {co2.map((item) => (
+            <CO2
+              key={item.co2_id}
+              co2_value={item.co2_value}
+              co2_per_share={item.co2_per_share}
+            />
+          ))}
+        </div>
       </div>
+
 
       {/* //UPDATE ACTIONS */}
       <div className="">
@@ -368,9 +446,12 @@ export default function Home() {
             onClick={() => {
               updateUserShares(subscription / nav[0].nav_per_share);
               updateCash(subscription * user.length);
-              updateTotalNav(subscription * user.length);
               updateTotalShare(subscription * user.length);
               updateUserBalance(subscription);
+              updateUserCO2Balance()
+              updateTotalNav();
+              updateCO2value() 
+
             }}
           >
             Users subscribe cash
@@ -415,7 +496,7 @@ export default function Home() {
             onClick={() => {
               let ranFLux = Math.random();
               updatePortfolio(100 * ranFLux);
-              updateTotalNav(100 * ranFLux);
+              updateTotalNav();
             }}
           >
             Value of equity Up/Down
